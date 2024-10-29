@@ -238,6 +238,7 @@ public class Main extends JFrame {
             progressBar.setValue(value);
         }
 
+
         @Override
         protected void done() {
             try {
@@ -335,73 +336,191 @@ public class Main extends JFrame {
     }
 
     private BufferedImage resizeWidth(BufferedImage image, int deltaWidth) {
+        int sign = Integer.signum(deltaWidth);
         deltaWidth = Math.abs(deltaWidth);
 
-        List<int[]> seams = new ArrayList<>();
-        BufferedImage tempImage = image;
-
-        // 시임 계산 및 제거
-        for (int i = 0; i < deltaWidth; i++) {
-            double[][] energy = computeEnergy(tempImage);
-            int[] seam = findVerticalSeam(energy);
-            seams.add(seam);
-            tempImage = removeVerticalSeam(tempImage, seam);
-        }
-
-        // 시임 위치 조정
-        seams = adjustSeamsForInsertion(seams, image.getWidth());
-
-        // 시임을 원본 이미지에 삽입
         BufferedImage resultImage = image;
-        for (int[] seam : seams) {
-            resultImage = insertVerticalSeam(resultImage, seam);
+
+        if (sign > 0) {
+            // 너비 증가: 시임 삽입
+            List<int[]> seams = new ArrayList<>();
+            for (int i = 0; i < deltaWidth; i++) {
+                double[][] energy = computeEnergy(resultImage);
+                int[] seam = findVerticalSeam(energy);
+                seams.add(seam);
+                resultImage = addVerticalSeam(resultImage, seam);
+            }
+            // 시임 위치를 균등하게 분포시킵니다.
+            resultImage = distributeVerticalSeams(resultImage, seams);
+        } else {
+            // 너비 감소: 시임 제거
+            for (int i = 0; i < deltaWidth; i++) {
+                double[][] energy = computeEnergy(resultImage);
+                int[] seam = findVerticalSeam(energy);
+                resultImage = removeVerticalSeam(resultImage, seam);
+            }
         }
 
         return resultImage;
     }
 
-
-
     private BufferedImage resizeHeight(BufferedImage image, int deltaHeight) {
+        int sign = Integer.signum(deltaHeight);
         deltaHeight = Math.abs(deltaHeight);
 
-        List<int[]> seams = new ArrayList<>();
-        BufferedImage tempImage = image;
-
-        // 시임 계산 및 제거
-        for (int i = 0; i < deltaHeight; i++) {
-            double[][] energy = computeEnergy(tempImage);
-            int[] seam = findHorizontalSeam(energy);
-            seams.add(seam);
-            tempImage = removeHorizontalSeam(tempImage, seam);
-        }
-
-        // 시임 위치 조정
-        seams = adjustSeamsForInsertion(seams, image.getHeight());
-
-        // 시임을 원본 이미지에 삽입
         BufferedImage resultImage = image;
-        for (int[] seam : seams) {
-            resultImage = insertHorizontalSeam(resultImage, seam);
+
+        if (sign > 0) {
+            // 높이 증가: 시임 삽입
+            List<int[]> seams = new ArrayList<>();
+            for (int i = 0; i < deltaHeight; i++) {
+                double[][] energy = computeEnergy(resultImage);
+                int[] seam = findHorizontalSeam(energy);
+                seams.add(seam);
+                resultImage = addHorizontalSeam(resultImage, seam);
+            }
+            // 시임 위치를 균등하게 분포시킵니다.
+            resultImage = distributeHorizontalSeams(resultImage, seams);
+        } else {
+            // 높이 감소: 시임 제거
+            for (int i = 0; i < deltaHeight; i++) {
+                double[][] energy = computeEnergy(resultImage);
+                int[] seam = findHorizontalSeam(energy);
+                resultImage = removeHorizontalSeam(resultImage, seam);
+            }
         }
 
         return resultImage;
+    }
+
+    private BufferedImage addVerticalSeam(BufferedImage image, int[] seam) {
+        int width = image.getWidth();
+        int height = image.getHeight();
+        BufferedImage output = new BufferedImage(width + 1, height, image.getType());
+
+        for (int y = 0; y < height; y++) {
+            int newX = 0;
+            for (int x = 0; x < width; x++) {
+                output.setRGB(newX++, y, image.getRGB(x, y));
+                if (x == seam[y]) {
+                    // 시임을 삽입합니다.
+                    int newRGB = averageColor(image, x, y);
+                    output.setRGB(newX++, y, newRGB);
+                }
+            }
+        }
+
+        return output;
+    }
+
+    private BufferedImage addHorizontalSeam(BufferedImage image, int[] seam) {
+        int width = image.getWidth();
+        int height = image.getHeight();
+        BufferedImage output = new BufferedImage(width, height + 1, image.getType());
+
+        for (int x = 0; x < width; x++) {
+            int newY = 0;
+            for (int y = 0; y < height; y++) {
+                output.setRGB(x, newY++, image.getRGB(x, y));
+                if (y == seam[x]) {
+                    // 시임을 삽입합니다.
+                    int newRGB = averageColor(image, x, y);
+                    output.setRGB(x, newY++, newRGB);
+                }
+            }
+        }
+
+        return output;
+    }
+
+    private BufferedImage distributeVerticalSeams(BufferedImage image, List<int[]> seams) {
+        int numSeams = seams.size();
+        if (numSeams == 0) return image;
+
+        // 시임들의 위치를 조정하여 균등하게 분포시킵니다.
+        seams = sortAndShiftSeams(seams);
+
+        BufferedImage resultImage = image;
+
+        for (int[] seam : seams) {
+            resultImage = addVerticalSeam(resultImage, seam);
+        }
+
+        return resultImage;
+    }
+
+    private BufferedImage distributeHorizontalSeams(BufferedImage image, List<int[]> seams) {
+        int numSeams = seams.size();
+        if (numSeams == 0) return image;
+
+        // 시임들의 위치를 조정하여 균등하게 분포시킵니다.
+        seams = sortAndShiftSeams(seams);
+
+        BufferedImage resultImage = image;
+
+        for (int[] seam : seams) {
+            resultImage = addHorizontalSeam(resultImage, seam);
+        }
+
+        return resultImage;
+    }
+
+    private List<int[]> sortAndShiftSeams(List<int[]> seams) {
+        int height = seams.get(0).length;
+
+        // 시임들의 위치를 정렬합니다.
+        seams.sort(Comparator.comparingInt(seam -> seam[0]));
+
+        // 시임 위치 조정
+        int[][] shiftMap = new int[height][seams.size()];
+
+        for (int i = 0; i < seams.size(); i++) {
+            int[] seam = seams.get(i);
+            for (int y = 0; y < height; y++) {
+                seam[y] += i;
+            }
+        }
+
+        return seams;
     }
 
 
     // Compute the energy map of the image
+    // 기본 사임 카빙 알고리즘 -> 에너지 적은 것을 기준으로 확장 => 특정 모서리에서만 확장
+    // 따라서 에너지 맵 계산 시 가장자리에 낮은 에너지 값을 부여할 예정
     public double[][] computeEnergy(BufferedImage image) {
         int width = image.getWidth();
         int height = image.getHeight();
         double[][] energy = new double[height][width];
 
+        // 이미지 중앙 좌표 계산
+        double centerX = width / 2.0;
+        double centerY = height / 2.0;
+
+        // 최대 거리 계산 (이미지 대각선 길이의 절반)
+        double maxDistance = Math.sqrt(centerX * centerX + centerY * centerY);
+
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
-                energy[y][x] = computeEnergyAtPixel(image, x, y);
+                double e = computeEnergyAtPixel(image, x, y);
+
+                // 픽셀의 중앙으로부터의 거리 계산
+                double dx = x - centerX;
+                double dy = y - centerY;
+                double distance = Math.sqrt(dx * dx + dy * dy);
+
+                // 위치에 따른 가중치 계산 (중앙부에 높은 에너지 부여)
+                double positionWeight = 1.0 + (distance / maxDistance) * 2.0; // 가중치 조절 가능
+
+                // 에너지에 가중치 적용
+                energy[y][x] = e * positionWeight;
             }
         }
+
         return energy;
     }
+
+
 
     private double computeEnergyAtPixel(BufferedImage image, int x, int y) {
         int width = image.getWidth();
@@ -573,9 +692,7 @@ public class Main extends JFrame {
             for (int x = 0; x < width; x++) {
                 output.setRGB(newX++, y, image.getRGB(x, y));
                 if (x == seam[y]) {
-                    int rgb1 = image.getRGB(x, y);
-                    int rgb2 = (x + 1 < width) ? image.getRGB(x + 1, y) : rgb1;
-                    int newRGB = averageColor(rgb1, rgb2);
+                    int newRGB = averageColor(image, x, y);
                     output.setRGB(newX++, y, newRGB);
                 }
             }
@@ -596,9 +713,7 @@ public class Main extends JFrame {
             for (int y = 0; y < height; y++) {
                 output.setRGB(x, newY++, image.getRGB(x, y));
                 if (y == seam[x]) {
-                    int rgb1 = image.getRGB(x, y);
-                    int rgb2 = (y + 1 < height) ? image.getRGB(x, y + 1) : rgb1;
-                    int newRGB = averageColor(rgb1, rgb2);
+                    int newRGB = averageColor(image, x, y);
                     output.setRGB(x, newY++, newRGB);
                 }
             }
@@ -606,71 +721,102 @@ public class Main extends JFrame {
         return output;
     }
 
-    private List<int[]> adjustSeamsForInsertion(List<int[]> seams, int size) {
-        List<int[]> adjustedSeams = new ArrayList<>();
-        int totalSize = size + seams.size();
-        int[] shift = new int[totalSize];
+    // 주변 픽셀들의 평균을 사용
+    private int averageColor(BufferedImage image, int x, int y) {
+        int width = image.getWidth();
+        int height = image.getHeight();
 
-        for (int[] seam : seams) {
-            int[] adjustedSeam = new int[seam.length];
-            for (int y = 0; y < seam.length; y++) {
-                int pos = seam[y];
-                if (pos < shift.length) {
-                    adjustedSeam[y] = pos + shift[pos];
-                } else {
-                    // 인덱스가 범위를 벗어나면 조정
-                    adjustedSeam[y] = shift.length - 1;
-                }
-            }
-            for (int y = 0; y < seam.length; y++) {
-                int pos = adjustedSeam[y];
-                if (pos < shift.length) {
-                    shift[pos]++;
-                }
-            }
-            adjustedSeams.add(adjustedSeam);
-        }
-        return adjustedSeams;
+        // 주변 좌표 계산
+        int left = Math.max(x - 1, 0);
+        int right = Math.min(x + 1, width - 1);
+        int up = Math.max(y - 1, 0);
+        int down = Math.min(y + 1, height - 1);
+
+        // 주변 픽셀들의 RGB 값 추출
+        Color c1 = new Color(image.getRGB(left, y), true);
+        Color c2 = new Color(image.getRGB(right, y), true);
+        Color c3 = new Color(image.getRGB(x, up), true);
+        Color c4 = new Color(image.getRGB(x, down), true);
+
+        // 각 컴포넌트의 합 계산
+        int red = c1.getRed() + c2.getRed() + c3.getRed() + c4.getRed();
+        int green = c1.getGreen() + c2.getGreen() + c3.getGreen() + c4.getGreen();
+        int blue = c1.getBlue() + c2.getBlue() + c3.getBlue() + c4.getBlue();
+        int alpha = c1.getAlpha() + c2.getAlpha() + c3.getAlpha() + c4.getAlpha();
+
+        // 평균 계산
+        red /= 4;
+        green /= 4;
+        blue /= 4;
+        alpha /= 4;
+
+        return new Color(red, green, blue, alpha).getRGB();
+    }
+
+    // 가중 평균을 사용한 색상 결정 - 중앙 픽셀에 더 높은 가중치를 주고, 주변 픽셀에는 낮은 가중치 부여
+    private int weightedAverageColor(BufferedImage image, int x, int y) {
+        int width = image.getWidth();
+        int height = image.getHeight();
+
+        // 주변 좌표 계산
+        int left = Math.max(x - 1, 0);
+        int right = Math.min(x + 1, width - 1);
+        int up = Math.max(y - 1, 0);
+        int down = Math.min(y + 1, height - 1);
+
+        // 중심 픽셀
+        Color center = new Color(image.getRGB(x, y), true);
+        // 주변 픽셀
+        Color leftC = new Color(image.getRGB(left, y), true);
+        Color rightC = new Color(image.getRGB(right, y), true);
+        Color upC = new Color(image.getRGB(x, up), true);
+        Color downC = new Color(image.getRGB(x, down), true);
+
+        // 가중치 설정
+        double centerWeight = 0.4;
+        double sideWeight = 0.15;
+        double upDownWeight = 0.15;
+        double totalWeight = centerWeight + 2 * sideWeight + 2 * upDownWeight;
+
+        // 각 컴포넌트의 가중 합 계산
+        double red = center.getRed() * centerWeight +
+                leftC.getRed() * sideWeight +
+                rightC.getRed() * sideWeight +
+                upC.getRed() * upDownWeight +
+                downC.getRed() * upDownWeight;
+        double green = center.getGreen() * centerWeight +
+                leftC.getGreen() * sideWeight +
+                rightC.getGreen() * sideWeight +
+                upC.getGreen() * upDownWeight +
+                downC.getGreen() * upDownWeight;
+        double blue = center.getBlue() * centerWeight +
+                leftC.getBlue() * sideWeight +
+                rightC.getBlue() * sideWeight +
+                upC.getBlue() * upDownWeight +
+                downC.getBlue() * upDownWeight;
+        double alpha = center.getAlpha() * centerWeight +
+                leftC.getAlpha() * sideWeight +
+                rightC.getAlpha() * sideWeight +
+                upC.getAlpha() * upDownWeight +
+                downC.getAlpha() * upDownWeight;
+
+        // 평균 계산
+        red /= totalWeight;
+        green /= totalWeight;
+        blue /= totalWeight;
+        alpha /= totalWeight;
+
+        // 0~255 범위로 클램핑
+        int r = Math.min(255, Math.max(0, (int) red));
+        int g = Math.min(255, Math.max(0, (int) green));
+        int b = Math.min(255, Math.max(0, (int) blue));
+        int a = Math.min(255, Math.max(0, (int) alpha));
+
+        return new Color(r, g, b, a).getRGB();
     }
 
 
 
-
-
-    private List<int[]> mapSeamsToOriginal(List<int[]> seams, int width, int height) {
-        List<int[]> mappedSeams = new ArrayList<>();
-        boolean[][] isSeamPixel = new boolean[height][width];
-        for (int[] seam : seams) {
-            for (int y = 0; y < height; y++) {
-                isSeamPixel[y][seam[y]] = true;
-            }
-        }
-
-        for (int[] seam : seams) {
-            int[] mappedSeam = new int[seam.length];
-            for (int y = 0; y < seam.length; y++) {
-                int count = 0;
-                for (int x = 0; x < seam[y]; x++) {
-                    if (isSeamPixel[y][x]) {
-                        count++;
-                    }
-                }
-                mappedSeam[y] = seam[y] + count;
-            }
-            mappedSeams.add(mappedSeam);
-        }
-        return mappedSeams;
-    }
-
-
-    private int averageColor(int rgb1, int rgb2) {
-        Color c1 = new Color(rgb1);
-        Color c2 = new Color(rgb2);
-        int red = (c1.getRed() + c2.getRed()) / 2;
-        int green = (c1.getGreen() + c2.getGreen()) / 2;
-        int blue = (c1.getBlue() + c2.getBlue()) / 2;
-        return new Color(red, green, blue).getRGB();
-    }
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(Main::new);
