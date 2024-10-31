@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="889a130a-704f-4c15-8fc7-7dcbfc4c2a67" name="Changes" comment="Resize Image">
+    <list default="true" id="889a130a-704f-4c15-8fc7-7dcbfc4c2a67" name="Changes" comment="bug fix">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/Main.java" afterDir="false" />
     </list>
@@ -17,6 +17,7 @@
     <option name="RECENT_TEMPLATES">
       <list>
         <option value="Interface" />
+        <option value="Class" />
       </list>
     </option>
   </component>
@@ -58,7 +59,10 @@
       <option name="presentableId" value="Default" />
       <updated>1730167123932</updated>
       <workItem from="1730167125310" duration="2333000" />
-      <workItem from="1730169534453" duration="6821000" />
+      <workItem from="1730169534453" duration="9694000" />
+      <workItem from="1730182056867" duration="2000" />
+      <workItem from="1730331792064" duration="791000" />
+      <workItem from="1730332629748" duration="2708000" />
     </task>
     <task id="LOCAL-00001" summary="Resize Image">
       <option name="closed" value="true" />
@@ -68,7 +72,15 @@
       <option name="project" value="LOCAL" />
       <updated>1730175293967</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="bug fix">
+      <option name="closed" value="true" />
+      <created>1730179338288</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1730179338288</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -76,6 +88,7 @@
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="Resize Image" />
-    <option name="LAST_COMMIT_MESSAGE" value="Resize Image" />
+    <MESSAGE value="bug fix" />
+    <option name="LAST_COMMIT_MESSAGE" value="bug fix" />
   </component>
 </project>
