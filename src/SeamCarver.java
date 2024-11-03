@@ -15,33 +15,21 @@ public class SeamCarver {
         BufferedImage resultImage = image;
 
         if (sign < 0) {
-            // 너비 감소: 시임 제거
+            // Width decrease: Remove seams
             for (int i = 0; i < deltaWidth; i++) {
                 double[][] energy = energyCalculator.computeEnergy(resultImage);
                 int[] seam = findVerticalSeam(energy);
                 resultImage = removeVerticalSeam(resultImage, seam);
-                progressCallback.accept(1);
+                progressCallback.accept(1); // Increment progress by 1 per seam
             }
         } else if (sign > 0) {
-            // 너비 증가: 시임 삽입
-            List<int[]> seams = new ArrayList<>();
-            BufferedImage tempImage = resultImage;
-
-            // 시임 계산 및 저장
+            // Width increase: Insert seams one by one
             for (int i = 0; i < deltaWidth; i++) {
-                double[][] energy = energyCalculator.computeEnergy(tempImage);
+                double[][] energy = energyCalculator.computeEnergy(resultImage);
                 int[] seam = findVerticalSeam(energy);
-                seams.add(seam);
-                tempImage = removeVerticalSeam(tempImage, seam);
-                progressCallback.accept(1);
+                resultImage = insertVerticalSeam(resultImage, seam);
+                progressCallback.accept(1); // Increment progress by 1 per seam
             }
-
-            // 시임들을 원본 이미지 좌표로 매핑하고 정렬
-            seams = mapSeamsToOriginal(seams);
-            seams = adjustSeamsForInsertion(seams, resultImage.getWidth());
-
-            // 시임들을 삽입
-            resultImage = insertVerticalSeams(resultImage, seams);
         }
 
         return resultImage;
@@ -81,33 +69,21 @@ public class SeamCarver {
         BufferedImage resultImage = image;
 
         if (sign < 0) {
-            // 높이 감소: 시임 제거
+            // Height decrease: Remove seams
             for (int i = 0; i < deltaHeight; i++) {
                 double[][] energy = energyCalculator.computeEnergy(resultImage);
                 int[] seam = findHorizontalSeam(energy);
                 resultImage = removeHorizontalSeam(resultImage, seam);
-                progressCallback.accept(1);
+                progressCallback.accept(1); // Increment by 1 per seam
             }
         } else if (sign > 0) {
-            // 높이 증가: 시임 삽입
-            List<int[]> seams = new ArrayList<>();
-            BufferedImage tempImage = resultImage;
-
-            // 시임 계산 및 저장
+            // Height increase: Insert seams one by one
             for (int i = 0; i < deltaHeight; i++) {
-                double[][] energy = energyCalculator.computeEnergy(tempImage);
+                double[][] energy = energyCalculator.computeEnergy(resultImage);
                 int[] seam = findHorizontalSeam(energy);
-                seams.add(seam);
-                tempImage = removeHorizontalSeam(tempImage, seam);
-                progressCallback.accept(1);
+                resultImage = insertHorizontalSeam(resultImage, seam);
+                progressCallback.accept(1); // Increment by 1 per seam
             }
-
-            // 시임들을 원본 이미지 좌표로 매핑하고 정렬
-            seams = mapSeamsToOriginal(seams);
-            seams = adjustSeamsForInsertion(seams, resultImage.getHeight());
-
-            // 시임들을 삽입
-            resultImage = insertHorizontalSeams(resultImage, seams);
         }
 
         return resultImage;
@@ -137,35 +113,21 @@ public class SeamCarver {
     }
 
 
-    public BufferedImage insertVerticalSeams(BufferedImage image, List<int[]> seams) {
+    public BufferedImage insertVerticalSeam(BufferedImage image, int[] seam) {
         int width = image.getWidth();
         int height = image.getHeight();
-        int numSeams = seams.size();
-
-        BufferedImage output = new BufferedImage(width + numSeams, height, image.getType());
-
-        int[][] seamMap = new int[height][width + numSeams];
-
-        for (int[] seam : seams) {
-            for (int y = 0; y < height; y++) {
-                int x = seam[y];
-                if (x >= 0 && x < width + numSeams) {
-                    seamMap[y][x]++;
-                }
-            }
-        }
+        BufferedImage output = new BufferedImage(width + 1, height, BufferedImage.TYPE_INT_ARGB);
 
         for (int y = 0; y < height; y++) {
             int newX = 0;
             for (int x = 0; x < width; x++) {
                 output.setRGB(newX++, y, image.getRGB(x, y));
-                while (seamMap[y][x] > 0) {
-                    // 시임 삽입
+                if (x == seam[y]) {
+                    // Insert a new pixel by averaging the current and next pixel
                     int rgb1 = image.getRGB(x, y);
-                    int rgb2 = (x + 1 < width) ? image.getRGB(x + 1, y) : rgb1;
+                    int rgb2 = (x < width - 1) ? image.getRGB(x + 1, y) : image.getRGB(x, y);
                     int newRGB = averageColor(rgb1, rgb2);
                     output.setRGB(newX++, y, newRGB);
-                    seamMap[y][x]--;
                 }
             }
         }
@@ -174,35 +136,21 @@ public class SeamCarver {
     }
 
 
-    public BufferedImage insertHorizontalSeams(BufferedImage image, List<int[]> seams) {
+    public BufferedImage insertHorizontalSeam(BufferedImage image, int[] seam) {
         int width = image.getWidth();
         int height = image.getHeight();
-        int numSeams = seams.size();
-
-        BufferedImage output = new BufferedImage(width, height + numSeams, image.getType());
-
-        int[][] seamMap = new int[height + numSeams][width];
-
-        for (int[] seam : seams) {
-            for (int x = 0; x < width; x++) {
-                int y = seam[x];
-                if (y >= 0 && y < height + numSeams) {
-                    seamMap[y][x]++;
-                }
-            }
-        }
+        BufferedImage output = new BufferedImage(width, height + 1, BufferedImage.TYPE_INT_ARGB);
 
         for (int x = 0; x < width; x++) {
             int newY = 0;
             for (int y = 0; y < height; y++) {
                 output.setRGB(x, newY++, image.getRGB(x, y));
-                while (seamMap[y][x] > 0) {
-                    // 시임 삽입
+                if (y == seam[x]) {
+                    // Insert a new pixel by averaging the current and next pixel
                     int rgb1 = image.getRGB(x, y);
-                    int rgb2 = (y + 1 < height) ? image.getRGB(x, y + 1) : rgb1;
+                    int rgb2 = (y < height - 1) ? image.getRGB(x, y + 1) : image.getRGB(x, y);
                     int newRGB = averageColor(rgb1, rgb2);
                     output.setRGB(x, newY++, newRGB);
-                    seamMap[y][x]--;
                 }
             }
         }
@@ -394,7 +342,7 @@ public class SeamCarver {
     public BufferedImage removeVerticalSeam(BufferedImage image, int[] seam) {
         int width = image.getWidth();
         int height = image.getHeight();
-        BufferedImage output = new BufferedImage(width - 1, height, image.getType());
+        BufferedImage output = new BufferedImage(width - 1, height, BufferedImage.TYPE_INT_ARGB);
 
         for (int y = 0; y < height; y++) {
             int newX = 0;
@@ -410,7 +358,7 @@ public class SeamCarver {
     public BufferedImage removeHorizontalSeam(BufferedImage image, int[] seam) {
         int width = image.getWidth();
         int height = image.getHeight();
-        BufferedImage output = new BufferedImage(width, height - 1, image.getType());
+        BufferedImage output = new BufferedImage(width, height - 1, BufferedImage.TYPE_INT_ARGB);
 
         for (int x = 0; x < width; x++) {
             int newY = 0;
@@ -503,11 +451,11 @@ public class SeamCarver {
         int g = (g1 + g2) / 2;
         int b = (b1 + b2) / 2;
 
+        // If the image does not support alpha, set alpha to 255
+        a = 255;
+
         // Combine the averaged components back into a single integer
         int newRGB = (a << 24) | (r << 16) | (g << 8) | b;
-
-        // Debugging log to verify the values
-        System.out.println("Average Color - A: " + a + ", R: " + r + ", G: " + g + ", B: " + b + ", NewRGB: " + Integer.toHexString(newRGB));
 
         return newRGB;
     }

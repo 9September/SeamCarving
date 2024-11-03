@@ -21,41 +21,53 @@ public class ImageResizer {
         int deltaHeight = targetHeight - currentHeight;
 
         int totalSteps = Math.abs(deltaWidth) + Math.abs(deltaHeight);
+        if (totalSteps == 0) {
+            progressCallback.accept(100);
+            return tempImage;
+        }
+
         AtomicInteger completedSteps = new AtomicInteger(0);
 
-        // 너비 조정
+        // Width adjustment
         if (deltaWidth != 0) {
             if (method.equals("standard")) {
                 tempImage = seamCarver.resizeWidthStandard(tempImage, deltaWidth, progress -> {
-                    completedSteps.addAndGet(progress);
-                    int percentage = (int) ((completedSteps.get() / (double) totalSteps) * 100);
+                    int newCompleted = completedSteps.addAndGet(progress);
+                    double rawPercentage = (newCompleted / (double) totalSteps) * 100;
+                    int percentage = (int) Math.min(rawPercentage, 100);
                     progressCallback.accept(percentage);
                 });
             } else {
                 tempImage = seamCarver.resizeWidthForced(tempImage, deltaWidth, progress -> {
-                    completedSteps.addAndGet(progress);
-                    int percentage = (int) ((completedSteps.get() / (double) totalSteps) * 100);
+                    int newCompleted = completedSteps.addAndGet(progress);
+                    double rawPercentage = (newCompleted / (double) totalSteps) * 100;
+                    int percentage = (int) Math.min(rawPercentage, 100);
                     progressCallback.accept(percentage);
                 });
             }
         }
 
-        // 높이 조정
+        // Height adjustment
         if (deltaHeight != 0) {
             if (method.equals("standard")) {
                 tempImage = seamCarver.resizeHeightStandard(tempImage, deltaHeight, progress -> {
-                    completedSteps.addAndGet(progress);
-                    int percentage = (int) ((completedSteps.get() / (double) totalSteps) * 100);
+                    int newCompleted = completedSteps.addAndGet(progress);
+                    double rawPercentage = (newCompleted / (double) totalSteps) * 100;
+                    int percentage = (int) Math.min(rawPercentage, 100);
                     progressCallback.accept(percentage);
                 });
             } else {
                 tempImage = seamCarver.resizeHeightForced(tempImage, deltaHeight, progress -> {
-                    completedSteps.addAndGet(progress);
-                    int percentage = (int) ((completedSteps.get() / (double) totalSteps) * 100);
+                    int newCompleted = completedSteps.addAndGet(progress);
+                    double rawPercentage = (newCompleted / (double) totalSteps) * 100;
+                    int percentage = (int) Math.min(rawPercentage, 100);
                     progressCallback.accept(percentage);
                 });
             }
         }
+
+        // Ensure progress is set to 100% at the end
+        progressCallback.accept(100);
 
         return tempImage;
     }

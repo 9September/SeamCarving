@@ -4,9 +4,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="889a130a-704f-4c15-8fc7-7dcbfc4c2a67" name="Changes" comment="split by standard/forced position">
+    <list default="true" id="889a130a-704f-4c15-8fc7-7dcbfc4c2a67" name="Changes" comment="update calculateEnergy">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/EnergyCalculator.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/EnergyCalculator.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ImageResizeTask.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/ImageResizeTask.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ImageResizer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/ImageResizer.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/SeamCarver.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/SeamCarver.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -63,7 +65,7 @@
       <workItem from="1730182056867" duration="2000" />
       <workItem from="1730331792064" duration="791000" />
       <workItem from="1730332629748" duration="2838000" />
-      <workItem from="1730604489105" duration="568000" />
+      <workItem from="1730604489105" duration="1550000" />
     </task>
     <task id="LOCAL-00001" summary="Resize Image">
       <option name="closed" value="true" />
@@ -89,7 +91,15 @@
       <option name="project" value="LOCAL" />
       <updated>1730336416696</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="update calculateEnergy">
+      <option name="closed" value="true" />
+      <created>1730605077285</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1730605077285</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -99,6 +109,7 @@
     <MESSAGE value="Resize Image" />
     <MESSAGE value="bug fix" />
     <MESSAGE value="split by standard/forced position" />
-    <option name="LAST_COMMIT_MESSAGE" value="split by standard/forced position" />
+    <MESSAGE value="update calculateEnergy" />
+    <option name="LAST_COMMIT_MESSAGE" value="update calculateEnergy" />
   </component>
 </project>

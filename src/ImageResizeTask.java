@@ -48,6 +48,7 @@ public class ImageResizeTask extends SwingWorker<BufferedImage, Integer> {
         } catch (Exception ex) {
             ex.printStackTrace();
             // 예외 처리
+            JOptionPane.showMessageDialog(controlPanel, "Error during image resizing.");
         }
     }
 }
