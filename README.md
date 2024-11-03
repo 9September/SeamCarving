@@ -1,1 +1,1 @@
-#Seam_Carving SNAPSHOT (Java)
+# Seam_Carving SNAPSHOT (Java)
